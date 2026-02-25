@@ -47,44 +47,44 @@ st.success("Modelo final cargado correctamente")
 IMAGENES = {
 
     "Z4-S1": {
-        "2 aulas por piso": {2: "planta_2a_2p.png", 3: "planta_2a_3p.png"},
-        "3 aulas por piso": {2: "planta_3a_2p.png", 3: "planta_3a_3p.png"},
+        "2 aulas por piso": {2: "planta_2a_2p.jpg", 3: "planta_2a_3p.jpg"},
+        "3 aulas por piso": {2: "planta_3a_2p.jpg", 3: "planta_3a_3p.jpg"},
     },
 
     "Z4-S2": {
-        "2 aulas por piso": {2: "planta_2a_2p.png", 3: "planta_2a_3p.png"},
-        "3 aulas por piso": {2: "planta_3a_2p.png", 3: "planta_3a_3p.png"},
+        "2 aulas por piso": {2: "planta_2a_2p.jpg", 3: "planta_2a_3p.jpg"},
+        "3 aulas por piso": {2: "planta_3a_2p.jpg", 3: "planta_3a_3p.jpg"},
     },
 
     "Z4-S3": {
-        "2 aulas por piso": {2: "planta_2a_2p.png", 3: "planta_2a_3p.png"},
-        "3 aulas por piso": {2: "planta_3a_2p.png", 3: "planta_3a_3p.png"},
+        "2 aulas por piso": {2: "planta_2a_2p.jpg", 3: "planta_2a_3p.jpg"},
+        "3 aulas por piso": {2: "planta_3a_2p.jpg", 3: "planta_3a_3p.jpg"},
     },
 
     "Z3-S2": {
-        "2 aulas por piso": {2: "planta_2a_2p.png", 3: "planta_2a_3p.png"},
-        "3 aulas por piso": {2: "planta_3a_2p.png", 3: "planta_3a_3p.png"},
+        "2 aulas por piso": {2: "planta_2a_2p.jpg", 3: "planta_2a_3p.jpg"},
+        "3 aulas por piso": {2: "planta_3a_2p.jpg", 3: "planta_3a_3p.jpg"},
     },
 
     "Z3-S3": {
-        "2 aulas por piso": {2: "planta_2a_2p.png", 3: "planta_2a_3p.png"},
-        "3 aulas por piso": {2: "planta_3a_2p.png", 3: "planta_3a_3p.png"},
+        "2 aulas por piso": {2: "planta_2a_2p.jpg", 3: "planta_2a_3p.jpg"},
+        "3 aulas por piso": {2: "planta_3a_2p.jpg", 3: "planta_3a_3p.jpg"},
     },
 
     # 👇 AQUÍ DIFERENCIAS Z2
     "Z2-S1": {
-        "2 aulas por piso": {2: "planta_2a_2p_Z2.png", 3: "planta_2a_3p_Z2.png"},
-        "3 aulas por piso": {2: "planta_3a_2p_Z2.png", 3: "planta_3a_3p_Z2.png"},
+        "2 aulas por piso": {2: "planta_2a_2p_Z2.jpg", 3: "planta_2a_3p_Z2.jpg"},
+        "3 aulas por piso": {2: "planta_3a_2p_Z2.jpg", 3: "planta_3a_3p_Z2.jpg"},
     },
 
     "Z2-S2": {
-        "2 aulas por piso": {2: "planta_2a_2p.png", 3: "planta_2a_3p.png"},
-        "3 aulas por piso": {2: "planta_3a_2p.png", 3: "planta_3a_3p.png"},
+        "2 aulas por piso": {2: "planta_2a_2p.jpg", 3: "planta_2a_3p.jpg"},
+        "3 aulas por piso": {2: "planta_3a_2p.jpg", 3: "planta_3a_3p.jpg"},
     },
 
     "Z2-S3": {
-        "2 aulas por piso": {2: "planta_2a_2p.png", 3: "planta_2a_3p.png"},
-        "3 aulas por piso": {2: "planta_3a_2p.png", 3: "planta_3a_3p.png"},
+        "2 aulas por piso": {2: "planta_2a_2p.jpg", 3: "planta_2a_3p.jpg"},
+        "3 aulas por piso": {2: "planta_3a_2p.jpg", 3: "planta_3a_3p.jpg"},
     },
 }
 
@@ -360,14 +360,13 @@ if st.button("Ejecutar estimación y predimensionamiento"):
             unsafe_allow_html=True
     )
 
-    st.subheader("Predimensionamiento preliminar de elementos estructurales")
+    st.subheader("Predimensionamiento estructural")
 
     st.info(
-        "Las dimensiones presentadas corresponden a criterios de "
-        "predimensionamiento estructural definidos a partir del análisis "
-        "de la base de datos del estudio y constituyen una referencia "
-        "preliminar para el diseño estructural."
-    )
+    "Las dimensiones corresponden a criterios de predimensionamiento "
+    "estructural definidos a partir del análisis de la base de datos "
+    "del estudio y constituyen una referencia preliminar para el diseño."
+)
 
 
     # --- Cálculo de elementos ---
@@ -383,12 +382,22 @@ if st.button("Ejecutar estimación y predimensionamiento"):
     Factor_SZ, Ltotal, Ledif, Bedif, Npisos
 )
 
-    st.subheader("Resumen del predimensionamiento")
+# ------------------------------------------------------------
+# CONFIGURACIÓN ESTRUCTURAL ASOCIADA AL PREDIMENSIONAMIENTO
+# ------------------------------------------------------------
+    try:
+        img = IMAGENES[clave_sz][tipo_config][Npisos]
+        st.image(
+            os.path.join(BASE_PATH, img),
+            use_container_width=True
+        )
+    except KeyError:
+        st.warning("No se dispone de un esquema para esta configuración.")
+
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("**Columnas de concreto armado**")
         st.markdown(
             f"""
             **Columna tipo T:**  
@@ -422,19 +431,7 @@ if st.button("Ejecutar estimación y predimensionamiento"):
             """
         )
         st.caption("PLx = Ltotal / N")
-    # ------------------------------------------------------------
-    # CONFIGURACIÓN ESTRUCTURAL ASOCIADA AL PREDIMENSIONAMIENTO
-    # ------------------------------------------------------------
-    st.subheader("Configuración estructural asociada al predimensionamiento obtenido")
 
-    try:
-        img = IMAGENES[clave_sz][tipo_config][Npisos]
-        st.image(
-            os.path.join(BASE_PATH, img),
-            caption=f"{tipo_config} – {Npisos} pisos – {zona_sismica}",
-            use_container_width=True
-        )
-    except KeyError:
-        st.warning("No se dispone de un esquema para esta configuración.")
+
 
 
