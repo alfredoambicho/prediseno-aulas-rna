@@ -17,8 +17,7 @@ st.set_page_config(
     layout="centered"
 )
 
-
-BASE_PATH = "."
+BASE_PATH = os.path.dirname(__file__)
 
 # ------------------------------------------------------------
 # CARGA DEL MODELO Y ESCALADORES
@@ -46,17 +45,46 @@ st.success("Modelo final cargado correctamente")
 # MAPA DE IMÁGENES POR ZONA Y CONFIGURACIÓN
 # ------------------------------------------------------------
 IMAGENES = {
-    "Z4": {
+
+    "Z4-S1": {
         "2 aulas por piso": {2: "planta_2a_2p.png", 3: "planta_2a_3p.png"},
         "3 aulas por piso": {2: "planta_3a_2p.png", 3: "planta_3a_3p.png"},
     },
-    "Z3": {
+
+    "Z4-S2": {
         "2 aulas por piso": {2: "planta_2a_2p.png", 3: "planta_2a_3p.png"},
         "3 aulas por piso": {2: "planta_3a_2p.png", 3: "planta_3a_3p.png"},
     },
-    "Z2": {
+
+    "Z4-S3": {
+        "2 aulas por piso": {2: "planta_2a_2p.png", 3: "planta_2a_3p.png"},
+        "3 aulas por piso": {2: "planta_3a_2p.png", 3: "planta_3a_3p.png"},
+    },
+
+    "Z3-S2": {
+        "2 aulas por piso": {2: "planta_2a_2p.png", 3: "planta_2a_3p.png"},
+        "3 aulas por piso": {2: "planta_3a_2p.png", 3: "planta_3a_3p.png"},
+    },
+
+    "Z3-S3": {
+        "2 aulas por piso": {2: "planta_2a_2p.png", 3: "planta_2a_3p.png"},
+        "3 aulas por piso": {2: "planta_3a_2p.png", 3: "planta_3a_3p.png"},
+    },
+
+    # 👇 AQUÍ DIFERENCIAS Z2
+    "Z2-S1": {
         "2 aulas por piso": {2: "planta_2a_2p_Z2.png", 3: "planta_2a_3p_Z2.png"},
         "3 aulas por piso": {2: "planta_3a_2p_Z2.png", 3: "planta_3a_3p_Z2.png"},
+    },
+
+    "Z2-S2": {
+        "2 aulas por piso": {2: "planta_2a_2p.png", 3: "planta_2a_3p.png"},
+        "3 aulas por piso": {2: "planta_3a_2p.png", 3: "planta_3a_3p.png"},
+    },
+
+    "Z2-S3": {
+        "2 aulas por piso": {2: "planta_2a_2p.png", 3: "planta_2a_3p.png"},
+        "3 aulas por piso": {2: "planta_3a_2p.png", 3: "planta_3a_3p.png"},
     },
 }
 
@@ -92,50 +120,66 @@ como referencia en etapas iniciales de diseño.
 # ------------------------------------------------------------
 # CONDICIÓN SÍSMICA
 # ------------------------------------------------------------
-st.subheader("Condición sísmica de la edificación")
+st.subheader("Condición sísmica de la edificación (Norma E.030)")
 
-c0, c1, c2, c3 = st.columns([1.6, 1, 1, 1])
+col0, col1, col2, col3, col4 = st.columns([2.5, 1.5, 1.25, 1.25, 1.25])
 
-with c0:
+with col0:
+    st.write("Zona sísmica – Tipo de suelo")
+
+with col1:
     opcion = st.selectbox(
-        "Zona sísmica – Tipo de suelo",
+        "",
         [
             "Z4 – S3", "Z4 – S2", "Z4 – S1",
             "Z3 – S3", "Z3 – S2",
             "Z2 – S3", "Z2 – S2", "Z2 – S1"
-        ]
+        ],
+        label_visibility="collapsed"
     )
 
 clave_sz = opcion.replace(" ", "").replace("–", "-")
 
 if clave_sz not in FACTORES_SZ:
-    st.error("Combinación de zona sísmica y tipo de suelo no disponible.")
+    st.error("Combinación no disponible.")
     st.stop()
 
 datos_sz = FACTORES_SZ[clave_sz]
 zona_sismica = clave_sz.split("-")[0]
 Factor_SZ = datos_sz["SZ"]
 
-with c1:
-    st.metric("S", f"{datos_sz['S']:.2f}")
+with col2:
+    st.write(f"**S:** {datos_sz['S']:.2f}")
 
-with c2:
-    st.metric("Z", f"{datos_sz['Z']:.2f}")
+with col3:
+    st.write(f"**Z:** {datos_sz['Z']:.2f}")
 
-with c3:
-    st.metric("S × Z", f"{datos_sz['SZ']:.3f}")
+with col4:
+    st.write(f"**S × Z:** {datos_sz['SZ']:.3f}")
 
 # ------------------------------------------------------------
 # DATOS GEOMÉTRICOS
 # ------------------------------------------------------------
 st.subheader("Datos geométricos de entrada")
 
-c3, c1, c4, c2 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns([1, 1, 2, 1, 1])
 
-with c3:
+with col1:
     Npisos = st.selectbox("N° pisos", [2, 3])
 
-with c1:
+with col3:
+    tipo_config = st.selectbox(
+        "Configuración",
+        ["2 aulas por piso", "3 aulas por piso"]
+    )
+
+# Dominio dinámico de Ledif según configuración
+if tipo_config == "2 aulas por piso":
+    Ledif_min, Ledif_max, Ledif_def = 15.83, 19.03, 19.03
+else:
+    Ledif_min, Ledif_max, Ledif_def = 23.63, 28.43, 23.63
+
+with col2:
     Hnpt = st.number_input(
         "Hnpt (m)",
         min_value=3.00,
@@ -143,15 +187,8 @@ with c1:
         value=3.00,
         step=0.05
     )
-    st.caption("3.00 ≤ Hnpt ≤ 4.20 m")
 
-with c4:
-    tipo_config = st.selectbox(
-        "Configuración",
-        ["2 aulas por piso", "3 aulas por piso"]
-    )
-
-with c2:
+with col4:
     Bedif = st.number_input(
         "Bedif (m)",
         min_value=9.74,
@@ -159,7 +196,17 @@ with c2:
         value=9.74,
         step=0.05
     )
-    st.caption("9.74 ≤ Bedif ≤ 10.74 m")
+
+with col5:
+    Ledif = st.number_input(
+        "Ledif (m)",
+        min_value=Ledif_min,
+        max_value=Ledif_max,
+        value=Ledif_def,
+        step=0.10
+    )
+
+    
 
 # Dominio de Ledif según configuración
 if tipo_config == "2 aulas por piso":
@@ -167,22 +214,23 @@ if tipo_config == "2 aulas por piso":
 else:
     Ledif_min, Ledif_max, Ledif_def = 23.63, 28.43, 23.63
 
-c_ledif, c_dom = st.columns([2, 1])
 
-with c_ledif:
-    Ledif = st.number_input(
-        "Largo de edificación Ledif (m)",
-        min_value=Ledif_min,
-        max_value=Ledif_max,
-        value=Ledif_def,
-        step=0.10
-    )
 
-with c_dom:
-    st.markdown("**Dominio admisible**")
-    st.markdown(
-        f"{Ledif_min:.2f} m ≤ Ledif ≤ {Ledif_max:.2f} m"
-    )
+st.caption("Dominio de validez del modelo predictivo:")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.caption("Altura de entrepiso (Hnpt)")
+    st.caption("3.00 m ≤ Hnpt ≤ 4.20 m")
+
+with col2:
+    st.caption("Ancho de edificación (Bedif)")
+    st.caption("9.74 m ≤ Bedif ≤ 10.74 m")
+
+with col3:
+    st.caption("Largo de edificación (Ledif)")
+    st.caption(f"{Ledif_min:.2f} m ≤ Ledif ≤ {Ledif_max:.2f} m")
 
 
 # ------------------------------------------------------------
@@ -291,28 +339,35 @@ def placas_T(Factor_SZ, Ltotal, Ledif, Bedif, Npisos):
 # ------------------------------------------------------------
 # PREDICCIÓN
 # ------------------------------------------------------------
-if st.button("Ejecutar prediseño"):
+if st.button("Ejecutar estimación y predimensionamiento"):
 
     X = np.array([[Hnpt, Npisos, Bedif, Ledif, Factor_SZ]])
     Xs = scaler_X.transform(X)
     Ys = model.predict(Xs, verbose=0)
     Ltotal = scaler_Y.inverse_transform(Ys)[0][0]
+    
+    st.subheader("Longitud total del sistema de placas estructurales (Ltotal)")
 
-    st.subheader("Estimación de la longitud total del sistema de placas estructurales")
-    st.metric(
-        "Longitud total del sistema de placas estructurales (Ltotal)",
-        f"{Ltotal:.3f} m"
+    col_texto, col_valor = st.columns([4, 1])
+
+    with col_texto:
+        st.markdown(
+        "Resultado del modelo predictivo desarrollado en el estudio"
     )
-    st.caption(
-    "Valor estimado mediante el modelo predictivo desarrollado en el estudio."
-)
+    with col_valor:
+        st.markdown(
+            f"<div style='text-align:right; font-size:1.5rem; font-weight:600;'>{Ltotal:.3f} m</div>",
+            unsafe_allow_html=True
+    )
 
     st.subheader("Predimensionamiento preliminar de elementos estructurales")
+
     st.info(
-    "Las dimensiones presentadas corresponden a criterios de predimensionamiento "
-    "estructural definidos a partir del análisis de la base de datos del estudio "
-    "y constituyen una referencia preliminar para el diseño estructural."
-)
+        "Las dimensiones presentadas corresponden a criterios de "
+        "predimensionamiento estructural definidos a partir del análisis "
+        "de la base de datos del estudio y constituyen una referencia "
+        "preliminar para el diseño estructural."
+    )
 
 
     # --- Cálculo de elementos ---
@@ -328,7 +383,7 @@ if st.button("Ejecutar prediseño"):
     Factor_SZ, Ltotal, Ledif, Bedif, Npisos
 )
 
-    st.subheader("Resumen del predimensionamiento de elementos estructurales")
+    st.subheader("Resumen del predimensionamiento")
 
     col1, col2 = st.columns(2)
 
@@ -363,17 +418,17 @@ if st.button("Ejecutar prediseño"):
             - Longitud en dirección y (PLy): {PLy:.2f} m  
             - Espesor de placa en dirección x (PLx-e): {ex:.2f} m  
             - Espesor de placa en dirección y (PLy-e): {ey:.2f} m  
-            - Número total de placas: **{nplacas}**
+            - Número total de placas (N): **{nplacas}**
             """
         )
-
+        st.caption("PLx = Ltotal / N")
     # ------------------------------------------------------------
     # CONFIGURACIÓN ESTRUCTURAL ASOCIADA AL PREDIMENSIONAMIENTO
     # ------------------------------------------------------------
     st.subheader("Configuración estructural asociada al predimensionamiento obtenido")
 
     try:
-        img = IMAGENES[zona_sismica][tipo_config][Npisos]
+        img = IMAGENES[clave_sz][tipo_config][Npisos]
         st.image(
             os.path.join(BASE_PATH, img),
             caption=f"{tipo_config} – {Npisos} pisos – {zona_sismica}",
@@ -381,3 +436,5 @@ if st.button("Ejecutar prediseño"):
         )
     except KeyError:
         st.warning("No se dispone de un esquema para esta configuración.")
+
+
