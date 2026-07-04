@@ -110,12 +110,10 @@ FACTORES_SZ = {
 st.title("Aplicación para el prediseño estructural de aulas escolares")
 
 st.markdown("""
-Aplicación de apoyo al prediseño estructural preliminar de aulas escolares.
+Herramienta de apoyo al prediseño estructural preliminar.
 
-La herramienta permite estimar la longitud total del sistema de placas estructurales (Ltotal)
-a partir de variables geométricas y de la condición sísmica de la edificación,
-proporcionando dimensiones preliminares de los principales elementos estructurales
-como referencia en etapas iniciales de diseño.
+Permite estimar la longitud total de placas en T (Ltotal) y obtener dimensiones preliminares
+de los principales elementos estructurales.
 """)
 
 
@@ -134,7 +132,7 @@ with col1:
 
 with col2:
     Suelo = st.selectbox(
-        "Tipo de suelo",
+        "Perfil de suelo",
         [1, 2, 3]
     )
 
@@ -199,7 +197,7 @@ with col5:
 
 
 
-st.caption("Dominio de validez del modelo predictivo:")
+st.caption("Dominio de aplicación del modelo:")
 
 col1, col2, col3 = st.columns(3)
 
@@ -322,7 +320,7 @@ def placas_T(Factor_SZ, Ltotal, Ledif, Bedif, Npisos):
 # ------------------------------------------------------------
 # PREDICCIÓN
 # ------------------------------------------------------------
-if st.button("Ejecutar estimación y predimensionamiento"):
+if st.button("Estimar"):
 
     # Factores sísmicos utilizados por la RNA
     S = datos_sz["S"]
@@ -338,14 +336,14 @@ if st.button("Ejecutar estimación y predimensionamiento"):
     Ltotal = scaler_Y.inverse_transform(Ys)[0][0]
 
     st.subheader(
-        "Longitud total del sistema de placas estructurales (Ltotal)"
+        "Longitud total de placas estructurales tipo T (Ltotal)"
     )
 
     col_texto, col_valor = st.columns([4, 1])
 
     with col_texto:
         st.markdown(
-        "Resultado del modelo predictivo desarrollado en el estudio"
+        "Estimación obtenida mediante el modelo predictivo"
     )
     with col_valor:
         st.markdown(
@@ -356,9 +354,9 @@ if st.button("Ejecutar estimación y predimensionamiento"):
     st.subheader("Predimensionamiento estructural")
 
     st.info(
-    "Las dimensiones corresponden a criterios de predimensionamiento "
-    "estructural definidos a partir del análisis de la base de datos "
-    "del estudio y constituyen una referencia preliminar para el diseño."
+    "Las dimensiones constituyen una referencia para el prediseño "
+    "estructural preliminar. "
+
 )
 
 
@@ -441,4 +439,3 @@ if st.button("Ejecutar estimación y predimensionamiento"):
         )
 
         st.caption("PLx = Ltotal / N")
-
