@@ -1,6 +1,6 @@
 # ============================================================
 # APLICACIÓN STREAMLIT – MODELO HÍBRIDO RNA + CRITERIO ESTRUCTURAL
-# MODELO FINAL (5 ENTRADAS)
+# MODELO FINAL (6 ENTRADAS)
 # ============================================================
 
 import os
@@ -17,7 +17,9 @@ st.set_page_config(
     layout="centered"
 )
 
-BASE_PATH = os.path.dirname(__file__)
+
+BASE_PATH = "."
+#BASE_PATH = os.path.dirname(__file__)
 
 # ------------------------------------------------------------
 # CARGA DEL MODELO Y ESCALADORES
@@ -26,13 +28,13 @@ BASE_PATH = os.path.dirname(__file__)
 def cargar_modelo_final():
 
     model = load_model(
-        os.path.join(BASE_PATH, "final_modelo_rna_estructural_3SZ.keras")
+        os.path.join(BASE_PATH, "modelo_rna_final.keras")
     )
     scaler_X = joblib.load(
-        os.path.join(BASE_PATH, "final_scaler_X_3SZ.pkl")
+        os.path.join(BASE_PATH, "X_scaler.pkl")
     )
     scaler_Y = joblib.load(
-        os.path.join(BASE_PATH, "final_scaler_Y_3SZ.pkl")
+        os.path.join(BASE_PATH, "Y_scaler.pkl")
     )
 
     return model, scaler_X, scaler_Y
@@ -122,40 +124,29 @@ como referencia en etapas iniciales de diseño.
 # ------------------------------------------------------------
 st.subheader("Condición sísmica de la edificación (Norma E.030)")
 
-col0, col1, col2, col3, col4 = st.columns([2.5, 1.5, 1.25, 1.25, 1.25])
-
-with col0:
-    st.write("Zona sísmica – Tipo de suelo")
+col1, col2 = st.columns(2)
 
 with col1:
-    opcion = st.selectbox(
-        "",
-        [
-            "Z4 – S3", "Z4 – S2", "Z4 – S1",
-            "Z3 – S3", "Z3 – S2",
-            "Z2 – S3", "Z2 – S2", "Z2 – S1"
-        ],
-        label_visibility="collapsed"
+    Zona = st.selectbox(
+        "Zona sísmica",
+        [2, 3, 4]
     )
 
-clave_sz = opcion.replace(" ", "").replace("–", "-")
+with col2:
+    Suelo = st.selectbox(
+        "Tipo de suelo",
+        [1, 2, 3]
+    )
+
+clave_sz = f"Z{Zona}-S{Suelo}"
 
 if clave_sz not in FACTORES_SZ:
     st.error("Combinación no disponible.")
     st.stop()
 
 datos_sz = FACTORES_SZ[clave_sz]
-zona_sismica = clave_sz.split("-")[0]
+
 Factor_SZ = datos_sz["SZ"]
-
-with col2:
-    st.write(f"**S:** {datos_sz['S']:.2f}")
-
-with col3:
-    st.write(f"**Z:** {datos_sz['Z']:.2f}")
-
-with col4:
-    st.write(f"**S × Z:** {datos_sz['SZ']:.3f}")
 
 # ------------------------------------------------------------
 # DATOS GEOMÉTRICOS
@@ -205,14 +196,6 @@ with col5:
         value=Ledif_def,
         step=0.10
     )
-
-    
-
-# Dominio de Ledif según configuración
-if tipo_config == "2 aulas por piso":
-    Ledif_min, Ledif_max, Ledif_def = 15.83, 19.03, 19.03
-else:
-    Ledif_min, Ledif_max, Ledif_def = 23.63, 28.43, 23.63
 
 
 
@@ -341,12 +324,22 @@ def placas_T(Factor_SZ, Ltotal, Ledif, Bedif, Npisos):
 # ------------------------------------------------------------
 if st.button("Ejecutar estimación y predimensionamiento"):
 
-    X = np.array([[Hnpt, Npisos, Bedif, Ledif, Factor_SZ]])
+    # Factores sísmicos utilizados por la RNA
+    S = datos_sz["S"]
+    Z = datos_sz["Z"]
+
+    # Entrada del modelo
+    X = np.array([[Hnpt, Npisos, Bedif, Ledif, Z, S]])
+
     Xs = scaler_X.transform(X)
+
     Ys = model.predict(Xs, verbose=0)
+
     Ltotal = scaler_Y.inverse_transform(Ys)[0][0]
-    
-    st.subheader("Longitud total del sistema de placas estructurales (Ltotal)")
+
+    st.subheader(
+        "Longitud total del sistema de placas estructurales (Ltotal)"
+    )
 
     col_texto, col_valor = st.columns([4, 1])
 
@@ -382,56 +375,70 @@ if st.button("Ejecutar estimación y predimensionamiento"):
     Factor_SZ, Ltotal, Ledif, Bedif, Npisos
 )
 
-# ------------------------------------------------------------
-# CONFIGURACIÓN ESTRUCTURAL ASOCIADA AL PREDIMENSIONAMIENTO
-# ------------------------------------------------------------
+    # ------------------------------------------------------------
+    # CONFIGURACIÓN ESTRUCTURAL ASOCIADA AL PREDIMENSIONAMIENTO
+    # ------------------------------------------------------------
+
     try:
         img = IMAGENES[clave_sz][tipo_config][Npisos]
+
         st.image(
             os.path.join(BASE_PATH, img),
-            use_container_width=True
+            width="stretch"
         )
-    except KeyError:
-        st.warning("No se dispone de un esquema para esta configuración.")
 
+    except KeyError:
+        st.warning(
+            "No se dispone de un esquema para esta configuración."
+        )
 
     col1, col2 = st.columns(2)
 
     with col1:
+
         st.markdown(
             f"""
-            **Columna tipo T:**  
-            - Dimensión en dirección x (Tx): {Tx:.2f} m  
-            - Dimensión en dirección y (Ty): {Ty:.2f} m  
+            **Columna tipo T**
 
-            **Columna tipo L:**  
-            - Dimensión en dirección x (Lx): {Lx_c:.2f} m  
+            - Dimensión en dirección x (Tx): {Tx:.2f} m
+            - Dimensión en dirección y (Ty): {Ty:.2f} m
+
+            **Columna tipo L**
+
+            - Dimensión en dirección x (Lx): {Lx_c:.2f} m
             - Dimensión en dirección y (Ly): {Ly_c:.2f} m
             """
         )
 
     with col2:
+
         st.markdown("**Vigas de concreto armado**")
+
         st.markdown(
             f"""
-            - Dirección X: ancho b = {Vx_b:.2f} m; altura h = {Vx_h:.2f} m  
-            - Dirección Y (entrepiso): b = {VyE_b:.2f} m; h = {VyE_h:.2f} m  
+            - Dirección X: ancho b = {Vx_b:.2f} m; altura h = {Vx_h:.2f} m
+
+            - Dirección Y (entrepiso): b = {VyE_b:.2f} m; h = {VyE_h:.2f} m
+
             - Dirección Y (techo): b = {VyT_b:.2f} m; h = {VyT_h:.2f} m
             """
         )
 
         st.markdown("**Placas estructurales tipo T**")
+
         st.markdown(
             f"""
-            - Longitud en dirección x (PLx): {PLx:.2f} m  
-            - Longitud en dirección y (PLy): {PLy:.2f} m  
-            - Espesor de placa en dirección x (PLx-e): {ex:.2f} m  
-            - Espesor de placa en dirección y (PLy-e): {ey:.2f} m  
+            - Longitud del ala (PLx): {PLx:.2f} m
+
+            - Longitud del alma (PLy): {PLy:.2f} m
+
+            - Espesor del ala (PLx-e): {ex:.2f} m
+
+            - Espesor del alma (PLy-e): {ey:.2f} m
+
             - Número total de placas (N): **{nplacas}**
             """
         )
+
         st.caption("PLx = Ltotal / N")
-
-
-
 
